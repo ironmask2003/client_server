@@ -7,8 +7,8 @@ char server_port[100];
 char server_address[100];
 char root_directory[100];
 msg messaggio;
-char file_name[BUFFER_SIZE];
-char dir[BUFFER_SIZE];
+char* file_name;
+char* dir;
 
 void check_arg_s(int argc, char* argv[])
 {
@@ -26,7 +26,6 @@ void check_arg_s(int argc, char* argv[])
         }
         else
         {
-            
             strcpy(server_address,argv[2]);
             strcpy(server_port,argv[4]);
             strcpy(root_directory,argv[6]);
@@ -36,13 +35,15 @@ void check_arg_s(int argc, char* argv[])
 }
 
 
-void handle_client(void *sockfd) 
+void* handle_client(void *sockfd) 
 {
 
 
     printf("vamos\n");
-    int* new_socket = sockfd;
-    
+    printf("dir: %s\n", dir);
+    printf("file_name: %s\n", file_name);
+    int new_socket = (int)sockfd;
+    sprintf(root_directory, "%s%s", dir, file_name);
     printf("dale papi\n"); 
     // socket del client
     
@@ -61,7 +62,7 @@ void handle_client(void *sockfd)
         sovrascritto con il contenuto di ciccio(1).txt che era vuoto, per questo ciccio.txt si ripuliva sempre.
         PORCO DIO
         */ 
-        char* path = "root/ciccio.txt";
+        char* path = strdup(root_directory);
         file = fopen(path, "r");
         if(file == NULL){
             printf("File non aperto\n");
@@ -84,6 +85,7 @@ void handle_client(void *sockfd)
 
     printf("ciclo fine\n");
     close(new_socket);
+    return NULL;
 }
 
 int main(int argc,char* argv[])
@@ -141,8 +143,10 @@ int main(int argc,char* argv[])
             exit(-1);
         }
         printf("messaggio: %d,%s,%s",messaggio.mode,messaggio.path,messaggio.file_name);
+        dir = strdup(messaggio.path);
+        file_name = strdup(messaggio.file_name);
         
-        if (pthread_create(&client_thread, NULL, handle_client, (void*) current_sock) < 0) {
+        if (pthread_create(&client_thread, NULL, handle_client, (void *) current_sock) < 0) {
             perror("Thread creation error");
             close(current_sock);
             //free(client);

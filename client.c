@@ -1,9 +1,62 @@
 #include "functioncs.c"
 
-
 cl_req cl;
 char p[BUFFER_SIZE];
 
+void split_p(char* path_input, int type_path)
+{
+    char* f_n = &strrchr(path_input, '/')[1];
+    printf("%s\n", f_n);
+    size_t path_l = f_n - path_input;
+    printf("%zu\n",path_l);
+    char path_out[path_l];
+    if((f_n != NULL) && strcmp(f_n, "") != 0){
+        strncpy(path_out,path_input,path_l);        // Copia il percorso del file in results
+        path_out[path_l] = '\0';                         // Aggiunge il terminatore, per indicare la fine della stringa
+    } else {perror("Error, missing slash in the path or file name not specified (try to run again the command and after -o or -f specify a correct path)");}
+    
+    if (type_path == 0) 
+    {
+        cl.remote_path = strdup(path_out);
+        cl.remote_file_n = strdup(f_n);
+    }
+    else 
+    {
+        cl.local_path = strdup(path_out);
+        cl.local_file_n = strdup(f_n);
+    }
+}
+
+void read_mode()
+{
+    char path[BUFFER_SIZE];
+    sprintf(path, "%s%s", cl.remote_path, cl.remote_file_n);
+    FILE* file;
+    // Controlla se il percorso e la directory e esistono, se non esistono vengono create
+    if(check_directory(cl.remote_path) == 1 && check_directory(path) == 1){
+        printf("file duplicato\n");
+        cl.remote_file_n = strdup(create_file(cl.remote_file_n, cl.remote_path));      // Nel caso in cui il percorso esiste controlla se esiste il file e nel caso ne crea un altro con lo stesso nome
+        // Dato che il nome del file e' stato cambiato, risalvo in path il percorso corretto in cui salvare il contenuto che prendo dal file nel server
+        sprintf(path, "%s%s", cl.remote_path, cl.remote_file_n);
+    }
+    else{
+        char* path_temp = strdup(cl.remote_path);        // Copia il percorso
+        char* temp = strtok(path_temp, "/");            // Eseuge lo split del '/'
+        char* cp_path_temp = strdup(temp);              // Copia la prime parte del percorso
+        // Controlla se e' arrivato alla fine del percorso
+        while(temp != NULL){
+            if(check_directory(cp_path_temp) == 0) {mkdir(cp_path_temp, 0755);}     // Controlla se la directory esiste, nel caso la crea
+            temp = strtok(NULL, "/");       // Effettua di nuovo lo split per passare al pezzo dopo
+            sprintf(cp_path_temp, "%s/%s", cp_path_temp, temp);     // Viene aggiunto alla variabile in cui alla fine sara' salvato il percorso completo
+        }
+        // Apre il file e lo chiude per effettuare la creazione del file fisico
+        file = fopen(path, "w");
+        if(file == NULL) perror("File not found");
+        fclose(file);
+    }
+    printf("read_mode: %s\n", path);
+    strcpy(p,path);
+}
 
 void check_arg_c(int argc,char* argv[])
 {
@@ -113,83 +166,8 @@ void check_arg_c(int argc,char* argv[])
                 cl.local_file_n=&cl.remote_file_n;
             }
         }*/
-       if(cl.read==1)
-       {
-        read_mode();
-        printf("%s\n",p);
-       }
-       
-        
     }
 }
-
-
-void read_mode()
-{
-    char path[BUFFER_SIZE];
-    sprintf(path, "%s%s", cl.remote_path, cl.remote_file_n);
-    FILE* file;
-    // Controlla se il percorso e la directory e esistono, se non esistono vengono create
-    if(check_directory(cl.remote_path) == 1 && check_directory(path) == 1){
-        printf("file duplicato\n");
-        cl.remote_file_n = strdup(create_file(cl.remote_file_n, cl.remote_path));      // Nel caso in cui il percorso esiste controlla se esiste il file e nel caso ne crea un altro con lo stesso nome
-        // Dato che il nome del file e' stato cambiato, risalvo in path il percorso corretto in cui salvare il contenuto che prendo dal file nel server
-        sprintf(path, "%s%s", cl.remote_path, cl.remote_file_n);
-    }
-    else{
-        char* path_temp = strdup(cl.remote_path);        // Copia il percorso
-        char* temp = strtok(path_temp, "/");            // Eseuge lo split del '/'
-        char* cp_path_temp = strdup(temp);              // Copia la prime parte del percorso
-        // Controlla se e' arrivato alla fine del percorso
-        while(temp != NULL){
-            if(check_directory(cp_path_temp) == 0) {mkdir(cp_path_temp, 0755);}     // Controlla se la directory esiste, nel caso la crea
-            temp = strtok(NULL, "/");       // Effettua di nuovo lo split per passare al pezzo dopo
-            sprintf(cp_path_temp, "%s/%s", cp_path_temp, temp);     // Viene aggiunto alla variabile in cui alla fine sara' salvato il percorso completo
-        }
-        // Apre il file e lo chiude per effettuare la creazione del file fisico
-        file = fopen(path, "w");
-        if(file == NULL) error("File not found");
-        fclose(file);
-    }
-    printf("read_mode: %s\n", path);
-    strcpy(p,path);
-}
-
-
-
-
-
-
-
-
-void split_p(char* path_input, int type_path)
-{
-    char* f_n = &strrchr(path_input, '/')[1];
-    printf(f_n);
-    size_t path_l = f_n - path_input;
-    printf("%d\n",path_l);
-    char path_out[path_l];
-    if((f_n != NULL) && strcmp(f_n, "") != 0){
-        strncpy(path_out,path_input,path_l);        // Copia il percorso del file in results
-        path_out[path_l] = '\0';                         // Aggiunge il terminatore, per indicare la fine della stringa
-    } else {perror("Error, missing slash in the path or file name not specified (try to run again the command and after -o or -f specify a correct path)");}
-    
-    if (type_path == 0) 
-    {
-        cl.remote_path = strdup(path_out);
-        cl.remote_file_n = strdup(f_n);
-    }
-    else 
-    {
-        cl.local_path = strdup(path_out);
-        cl.local_file_n = strdup(f_n);
-    }
-} 
-
-
-
-
-
 
 int main(int argc,char* argv[])
 {
@@ -199,7 +177,6 @@ int main(int argc,char* argv[])
     
 
     check_arg_c(argc,argv);
-
 
     client_fd=socket(AF_INET,SOCK_STREAM,0);
     if(client_fd<0)
@@ -211,7 +188,7 @@ int main(int argc,char* argv[])
     server_address.sin_family= AF_INET;
     server_address.sin_port=htons(cl.server_po);
 
-    if(inet_pton(AF_INET, cl.server_addr, &server_address.sin_addr) <= 0){error("Error converting IP address");}
+    if(inet_pton(AF_INET, cl.server_addr, &server_address.sin_addr) <= 0){perror("Error converting IP address");}
 
 
     connect(client_fd,(struct sockaddr *)&server_address,sizeof(server_address));
@@ -236,6 +213,12 @@ int main(int argc,char* argv[])
         
     strcpy(messaggio.path,cl.remote_path);
     strcpy(messaggio.file_name,cl.remote_file_n);
+
+   if(cl.read==1)
+       {
+        read_mode();
+        printf("%s\n",p);
+    }
         
 
     printf("%d\n",messaggio.mode);
@@ -277,4 +260,4 @@ int main(int argc,char* argv[])
 
 
     return 0;
-}
+}        

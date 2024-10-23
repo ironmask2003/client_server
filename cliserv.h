@@ -4,13 +4,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <netinet/in.h>         
-#include <string.h>            // Usato per lavorare con le stringhe
+#include <strings.h>            // Usato per lavorare con le stringhe
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <stdbool.h>            // Usato per usare i booleani
 #include <unistd.h>
 #include <pthread.h>            // Usato per istanziare Thread
-#include <dirent.h> 
+#include <dirent.h>             // Usato per lavorare con le directory
 
 
 #define BUFFER_SIZE 1024
